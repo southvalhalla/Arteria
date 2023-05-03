@@ -1,0 +1,30 @@
+body{
+    overflow-x: hidden;
+}
+.caja_popup
+{
+    display: none;
+    position: absolute;
+
+}
+.contenedor_popup
+{
+    border-radius: 5px;
+    top: 50%;
+    left: 50%;
+    position: absolute;
+    transform: translate(-50%,-50%);
+    width: 400px;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+.margin {
+    margin-left: 50%;
+}
+
+.centered-element {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
