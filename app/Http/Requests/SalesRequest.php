@@ -13,7 +13,7 @@ class SalesRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,7 +24,15 @@ class SalesRequest extends FormRequest
     public function rules()
     {
         return [
-            //
+            'client_id'         => 'required',
+            'date'              => 'required',
+            'productSelected'   => 'required',
+            'quantity'          => 'required',
+            'confirm_method'    => 'required',
+            'name'              => 'required|min:3',
+            'lastName'          => 'required|min:3',
+            'number_account'    => 'min:10',
+            'security_cod'      => 'min:4|max:4',
         ];
     }
 }

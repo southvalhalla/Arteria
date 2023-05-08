@@ -13,6 +13,8 @@ use App\Http\Controllers\CategoriesController;
 |
 */
 
+// Route::get('/', 'LoginController@index')->name('login.index');
+
 Route::get('/', function () {
     return view('main.index');
 });

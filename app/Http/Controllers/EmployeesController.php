@@ -59,16 +59,6 @@ class EmployeesController extends Controller
      */
     public function store(EmployeesRequest $request)
     {
-        // Employees::create([
-        //     'document_type_id' => $request->document_type_id,
-        //     'document_number' => $request->document_number,
-        //     'names' => $request->names,
-        //     'lastnames' => $request->lastnames,
-        //     'email' => $request->email,
-        //     'phone' => $request->phone,
-        //     'job_id' => $request->job_id
-        // ]);
-
         Employees::create($request->all());
 
         return redirect()->route('employees.index')->with('success', 'Empleado creado correctamente.');
@@ -102,15 +92,7 @@ class EmployeesController extends Controller
      */
     public function update(EmployeesRequest $request, $id)
     {
-        Employees::find($id)->update([
-            'document_type_id' => $request->document_type,
-            'document_number' => $request->document_number,
-            'names' => $request->names,
-            'lastnames' => $request->lastnames,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'job_id' => $request->job
-        ]);
+        Employees::find($id)->update($request->all());
 
         return redirect()->route('employees.index')->with('success', 'Empleado modificado correctamente.');
     }

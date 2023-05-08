@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Classes\MethodsPaymentBuilder;
+use Illuminate\Http\Request;
+
+// use App\Classes\MethodsPaymentBuilder;
+// use App\Classes\ProductBuilder;
+
 use App\Models\Clients;
 use App\Models\Products;
-use Illuminate\Http\Request;
 use App\Models\Sales;
-use App\Classes\ProductBuilder;
 use App\Models\Methods_payment;
 use App\Models\Products_sales;
+
+use App\Http\Requests\SalesRequest;
 use Carbon\Carbon;
 
 class SalesController extends Controller
@@ -40,88 +44,20 @@ class SalesController extends Controller
         ]);
     }
 
-    public function store(Request $request){
-        $request->validate([
-            'client_id'         => 'required',
-            'date'              => 'required',
-            'productSelected'   => 'required',
-            'quantity'          => 'required',
-            'confirm_method'    => 'required',
-        ]);
+    public function store(SalesRequest $request){
 
-        if($request->confirm_method == self::METHODS_PAYMENT['METHOD_CARD']){
-            $request->validate([
-                'number_account'    => 'required',
-                'bank'              => 'required',
-                'name'              => 'required' ,
-                'lastName'          => 'required' ,
-                'expirate_date'     => 'required' ,
-                'security_cod'      => 'required' ,
-                'card_type'         => 'required' ,
-            ]);
-
-            // $methodsPayment = (new MethodsPaymentBuilder())
-            //     ->withType(self::METHODS_PAYMENT['METHOD_CARD'])
-            //     ->withNumberAccount($request->number_account)
-            //     ->withBank($request->bank)
-            //     ->withName($request->name)
-            //     ->withLastName($request->lastName)
-            //     ->withExpirateDate($request->expirate_date)
-            //     ->withSecurityCod($request->security_cod)
-            //     ->withCardType($request->card_type)
-            //     ->build();
-
-            Methods_payment::create([
-                'type' => self::METHODS_PAYMENT['METHOD_CARD'],
-                'number_account' => $request->number_account,
-                'bank' => $request->bank,
-                'name' => $request->name,
-                'lastName' => $request->lastName,
-                'expirate_date' => $request->expirate_date,
-                'security_cod' => $request->security_cod,
-                'card_type' => $request->card_type,
-            ]);
-
-
-        }else if($request->confirm_method == self::METHODS_PAYMENT['METHOD_CASH']){
-            $request->validate([
-                'name' => 'required' ,
-                'lastName' => 'required',
-            ]);
-
-            // $methodsPayment = (new MethodsPaymentBuilder())
-            //     ->withType(self::METHODS_PAYMENT['METHOD_CASH'])
-            //     ->withName($request->name)
-            //     ->withLastName($request->lastName)
-            //     ->build();
-
-            Methods_payment::create([
-                'type' => self::METHODS_PAYMENT['METHOD_CASH'],
-                'name' => $request->name,
-                'lastName' => $request->lastName,
-            ]);
-
-        }else if($request->confirm_method == self::METHODS_PAYMENT['METHOD_NEQUI']){
-            $request->validate([
-                'name' => 'required' ,
-                'lastName' => 'required',
-                'number_account' => 'required',
-            ]);
-
-            // $methodsPayment = (new MethodsPaymentBuilder())
-            //     ->withType(self::METHODS_PAYMENT['METHOD_NEQUI'])
-            //     ->withName($request->name)
-            //     ->withLastName($request->lastName)
-            //     ->withNumberAccount($request->number_account)
-            //     ->build();
-
-            Methods_payment::create([
-                'type' => self::METHODS_PAYMENT['METHOD_NEQUI'],
-                'name' => $request->name,
-                'lastName' => $request->lastName,
-                'number_account' => $request->number_account,
-            ]);
+        switch($request->confirm_method){
+            case self::METHODS_PAYMENT['METHOD_CARD']:
+                $this->methodCard($request);
+                break;
+            case self::METHODS_PAYMENT['METHOD_CASH']:
+                $this->methodCash($request);
+                break;
+            case self::METHODS_PAYMENT['METHOD_NEQUI']:
+                $this->methodNequi($request);
+                break;
         }
+
         $methodsPayment = Methods_payment::latest()->first()->id;
 
         $date = Carbon::createFromFormat('Y-m-d', $request->date);
@@ -145,29 +81,7 @@ class SalesController extends Controller
             'total' => $total,
         ]);
 
-        $i = 0;
-        foreach($request->productSelected as $product){
-
-            $sale_id  = Sales::latest()->first()->id;
-            $validation_quatity = Products_sales::where('product_id',$product)->where('sale_id',$sale_id);
-
-            if($validation_quatity->exists()){
-                $validation_quatity->update([
-                    'quantity' => $validation_quatity->first()->quantity + $request->quantity[$i],
-                ]);
-            }else{
-                $products = Products::find($product);
-
-                Products_sales::create([
-                    'product_id' => $products->id,
-                    'sale_id' => $sale_id,
-                    'name' => $products->name,
-                    'price' => $products->price,
-                    'quantity' => $request->quantity[$i],
-                ]);
-            }
-            $i++;
-        }
+        $this->productBuilder($request);
 
         return redirect()->route('sales.index')->with('success', 'Venta registrada correctamente');
     }
@@ -201,4 +115,62 @@ class SalesController extends Controller
         $sale->delete();
         return redirect()->route('sales.index')->with('success', 'Venta eliminada correctamente');
     }
+
+    // methods payment
+    private function methodCard($request){
+        Methods_payment::create([
+            'type' => self::METHODS_PAYMENT['METHOD_CARD'],
+            'number_account' => $request->number_account,
+            'bank' => $request->bank,
+            'name' => $request->name,
+            'lastName' => $request->lastName,
+            'expirate_date' => $request->expirate_date,
+            'security_cod' => $request->security_cod,
+            'card_type' => $request->card_type,
+        ]);
+
+    }
+    private function methodCash($request){
+        Methods_payment::create([
+            'type' => self::METHODS_PAYMENT['METHOD_CASH'],
+            'name' => $request->name,
+            'lastName' => $request->lastName,
+        ]);
+    }
+
+    private function methodNequi($request){
+        Methods_payment::create([
+            'type' => self::METHODS_PAYMENT['METHOD_NEQUI'],
+            'name' => $request->name,
+            'lastName' => $request->lastName,
+            'number_account' => $request->number_account,
+        ]);
+    }
+
+    private function productBuilder($request){
+        $i = 0;
+        foreach($request->productSelected as $product){
+
+            $sale_id  = Sales::latest()->first()->id;
+            $validation_quatity = Products_sales::where('product_id',$product)->where('sale_id',$sale_id);
+
+            if($validation_quatity->exists()){
+                $validation_quatity->update([
+                    'quantity' => $validation_quatity->first()->quantity + $request->quantity[$i],
+                ]);
+            }else{
+                $products = Products::find($product);
+
+                Products_sales::create([
+                    'product_id' => $products->id,
+                    'sale_id' => $sale_id,
+                    'name' => $products->name,
+                    'price' => $products->price,
+                    'quantity' => $request->quantity[$i],
+                ]);
+            }
+            $i++;
+        }
+    }
+
 }
