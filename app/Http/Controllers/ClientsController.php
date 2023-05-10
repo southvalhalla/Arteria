@@ -16,8 +16,9 @@ class ClientsController extends Controller
      */
     public function all(Request $request)
     {
-        $begin = Is_numeric($request->page) ? ($request->page - 1) * $request->limit : 0;
-        $clients = Clients::orderBy('id', 'DESC')->skip($begin)->take($request->limit)->get();
+        $limit = $request->limit ??  5;
+        $begin = Is_numeric($request->page) ? ($request->page - 1) * $limit : 0;
+        $clients = Clients::orderBy('id', 'DESC')->skip($begin)->take($limit)->get();
         $clients->load('document_type');
 
         return response()->json($clients);

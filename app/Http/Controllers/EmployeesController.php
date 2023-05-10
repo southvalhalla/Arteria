@@ -21,6 +21,7 @@ class EmployeesController extends Controller
      */
     public function all(Request $request)
     {
+        $limit = $request->limit ?? 5;
         $begin = Is_numeric($request->page) ? ($request->page - 1) * $request->limit : 0;
         $employees = Employees::orderBy('id', 'DESC')->skip($begin)->take($request->limit)->get();
         $employees->load('document_type','job');
