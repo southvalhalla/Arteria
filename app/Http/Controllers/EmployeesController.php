@@ -10,6 +10,7 @@ use App\Models\Employees;
 use Illuminate\Http\Request;
 
 use \FPDF;
+use Hamcrest\Type\IsNumeric;
 
 class EmployeesController extends Controller
 {
@@ -18,37 +19,13 @@ class EmployeesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function all(Request $request)
     {
-        if(isset($_REQUEST['num'])){
-            $_REQUEST['num'] = $_REQUEST['num']!=''|!empty($_REQUEST['num'])?$_REQUEST['num']:1;
-            $page = $_REQUEST['num'];
-        }else{
-            $page=1;
-        }
-        $viewRows = 5;
-        $begin = is_numeric($page)?(($page-1)*$viewRows):0;
-        $employees = Employees::orderBy('id', 'DESC')->skip($begin)->take($viewRows)->get();
-        $rows = Employees::orderBy('id','asc')->count();
+        $begin = Is_numeric($request->page) ? ($request->page - 1) * $request->limit : 0;
+        $employees = Employees::orderBy('id', 'DESC')->skip($begin)->take($request->limit)->get();
+        $employees->load('document_type','job');
 
-
-        $prev = $page - 1;
-        $next = $page + 1;
-        $end = ceil($rows/$viewRows);
-
-        $document_types = Document_type::orderBy('id', 'ASC')->get();
-        $jobs = Job::orderBy('id', 'ASC')->get();
-
-
-        return view('employees.index', [
-            'employees' => $employees,
-            'document_types' => $document_types,
-            'jobs' => $jobs,
-            'prev' => $prev,
-            'next' => $next,
-            'end' => $end,
-            'page' => $page
-        ]);
+        return response()->json($employees);
     }
 
     /**
@@ -57,11 +34,12 @@ class EmployeesController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(EmployeesRequest $request)
+    public function add(EmployeesRequest $request)
     {
-        Employees::create($request->all());
+        $employee = new Employees();
+        $employee->fill($request->all());
 
-        return redirect()->route('employees.index')->with('success', 'Empleado creado correctamente.');
+        $employee->save();
     }
 
     /**
@@ -70,17 +48,12 @@ class EmployeesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function get($id)
     {
-        $employee = Employees::find($id);
-        $document_types = Document_type::orderBy('id', 'ASC')->get();
-        $jobs = Job::orderBy('id', 'ASC')->get();
+        $employee = Employees::findOrFail($id);
+        $employee->load('document_type','job');
 
-        return view('employees.detail',[
-            'employee' => $employee,
-            'document_types' => $document_types,
-            'jobs' => $jobs,
-        ]);
+        return response()->json($employee);
     }
 
     /**
@@ -90,11 +63,13 @@ class EmployeesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(EmployeesRequest $request, $id)
+    public function patch(Request $request, $id)
     {
-        Employees::find($id)->update($request->all());
+        $rules = [];
 
-        return redirect()->route('employees.index')->with('success', 'Empleado modificado correctamente.');
+        $employee = Employees::findOrFail($id);
+        $employee->fill($request->all());
+        $employee->save();
     }
 
     /**
@@ -110,7 +85,6 @@ class EmployeesController extends Controller
             $user->delete();
         });
         $employee->delete();
-        return redirect()->route('employees.index')->with('success', 'Empleado '.$employee->id.' elimininado correctamente.');
     }
 
     function generatePDF() {

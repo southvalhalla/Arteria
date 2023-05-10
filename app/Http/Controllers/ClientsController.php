@@ -14,44 +14,13 @@ class ClientsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function all(Request $request)
     {
-        if(isset($_REQUEST['num'])){
-            $_REQUEST['num'] = $_REQUEST['num']!=''|!empty($_REQUEST['num'])?$_REQUEST['num']:1;
-            $page = $_REQUEST['num'];
-        }else{
-            $page=1;
-        }
-        $viewRows = 5;
-        $begin = is_numeric($page)?(($page-1)*$viewRows):0;
-        $clients = Clients::orderBy('id', 'DESC')->skip($begin)->take($viewRows)->get();
-        $rows = Clients::orderBy('id','asc')->count();
+        $begin = Is_numeric($request->page) ? ($request->page - 1) * $request->limit : 0;
+        $clients = Clients::orderBy('id', 'DESC')->skip($begin)->take($request->limit)->get();
+        $clients->load('document_type');
 
-
-        $prev = $page - 1;
-        $next = $page + 1;
-        $end = ceil($rows/$viewRows);
-
-        $document_types = Document_type::orderBy('id', 'ASC')->get();
-
-        return view('clients.index', [
-            'clients' => $clients,
-            'document_types' => $document_types,
-            'prev' => $prev,
-            'next' => $next,
-            'end' => $end,
-            'page' => $page
-        ]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        return response()->json($clients);
     }
 
     /**
@@ -60,11 +29,11 @@ class ClientsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(ClientsRequest $request)
+    public function add(ClientsRequest $request)
     {
-        Clients::create($request->all());
-
-        return redirect()->route('clients.index')->with('success', 'Cliente creado correctamente.');
+        $client = new Clients;
+        $client->fill($request->all());
+        $client->save();
     }
 
     /**
@@ -73,14 +42,12 @@ class ClientsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function get($id)
     {
-        $client = Clients::find($id);
-        $document_types = Document_type::all();
-        return view('clients.detail', [
-            'client' => $client,
-            'document_types' => $document_types,
-        ]);
+        $client = Clients::findOrFail($id);
+        $client->load('document_type');
+
+        return response()->json($client);
     }
 
     /**
@@ -90,11 +57,11 @@ class ClientsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(ClientsRequest $request, $id)
+    public function patch(Request $request, $id)
     {
-        Clients::find($id)->update($request->all());
-
-        return redirect()->route('clients.index')->with('success', 'Cliente actualizado correctamente.');
+        $client = Clients::findOrFail($id);
+        $client->fill($request->all());
+        $client->save();
     }
 
     /**
@@ -113,21 +80,5 @@ class ClientsController extends Controller
             $sale->delete();
         });
         $client->delete();
-        return redirect()->route('clients.index')->with('success', 'Cliente '. $client->id.' eliminado correctamente.');
     }
-
-    // public function updateAll()
-    // {
-    //     $document_types = Document_type::all();
-    //     $clients = Clients::all();
-
-    //     foreach($clients as $client){
-    //         foreach($document_types as $document_type){
-    //             if($client->document_type == $document_type->document_type){
-    //                 $client->document_type_id = $document_type->id;
-    //             }
-    //         }
-    //         $client->save();
-    //     }
-    // }
 }

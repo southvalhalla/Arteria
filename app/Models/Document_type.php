@@ -9,8 +9,4 @@ use  App\Models\Client;
 class Document_type extends Model
 {
     protected $table = 'document_type';
-
-    public function client(){
-        return $this->hasMany(Client::class);
-    }
 }

@@ -27,7 +27,7 @@ class ProductsRequest extends FormRequest
             'name'          => 'required|string|min:3',
             'trademark'     => 'required|string|min:3',
             'in_inventary'  => 'required',
-            'category'      => 'required',
+            'category_id'   => 'required',
             'description'   => 'required|min:10',
             'price'         => 'required|int'
         ];

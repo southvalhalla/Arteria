@@ -14,11 +14,11 @@ class ProductsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
+    public function all(){
         $products = Products::orderBy('id','desc')->get();
-        $categories = Categories::orderBy('category','asc')->get();
-        return view('products.index', ['products' => $products,'categories' => $categories]);
+        $products->load('category');
+
+        return response()->json($products);
     }
 
     /**
@@ -27,19 +27,12 @@ class ProductsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(ProductsRequest $request)
+    public function add(ProductsRequest $request)
     {
-        Products::create([
-            'cod'           => 'P'.rand(4000,6000),
-            'name'          => $request->name,
-            'trademark'     => $request->trademark,
-            'in_inventary'  => $request->in_inventary,
-            'category_id'   => $request->category,
-            'description'   => $request->description,
-            'price'         => $request->price,
-        ]);
-
-        return redirect()->route('products.index')->with('success', 'Producto creado correctamente.');
+        $product = new Products;
+        $product->fill($request->all());
+        $product->cod = 'P'.rand(4000,6000);
+        $product->save();
     }
 
     /**
@@ -48,11 +41,12 @@ class ProductsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function get($id)
     {
-        $product = Products::find($id);
-        $categories = Categories::orderBy('category','asc')->get();
-        return view('products.detail', ['product' => $product, 'categories' => $categories]);
+        $product = Products::findOrFail($id);
+        $product->load('category');
+
+        return response()->json($product);
     }
 
     /**
@@ -62,19 +56,14 @@ class ProductsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(ProductsRequest $request, $id)
+    public function patch(Request $request, $id)
     {
-        $product = Products::find($id);
+        $rules = [];
+        $product = Products::findOrFail($id);
 
-        $product->name          = $request->name;
-        $product->trademark     = $request->trademark;
-        $product->in_inventary  = $request->in_inventary;
-        $product->category_id   = $request->category;
-        $product->description   = $request->description;
-        $product->price         = $request->price;
+        $product->fill($request->all());
+
         $product->save();
-
-        return redirect()->route('products.index')->with('success', 'Producto Actualizado.');
 
     }
 
@@ -88,6 +77,5 @@ class ProductsController extends Controller
     {
         $product = Products::find($id);
         $product->delete();
-        return redirect()->route('products.index')->with('success', 'Producto Eliminado.');
     }
 }

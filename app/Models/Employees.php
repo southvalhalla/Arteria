@@ -4,7 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use  Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Models\Users;
+use App\Models\Document_Type;
+use App\Models\Job;
 
 class Employees extends Model
 {
@@ -24,5 +27,13 @@ class Employees extends Model
 
     function users(){
         return $this->hasOne(Users::class, 'employee_id');
+    }
+
+    function document_type(){
+        return $this->belongsTo(Document_Type::class, 'document_type_id');
+    }
+
+    function job(){
+        return $this->belongsTo(Job::class, 'job_id');
     }
 }
